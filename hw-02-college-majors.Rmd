@@ -11,7 +11,7 @@ link-citations: true
 
 ```{r include = FALSE}
 knitr::opts_chunk$set(
-  eval = FALSE,
+  eval = TRUE,
   out.width = "80%",
   fig.asp = 0.618,
   fig.width = 10,
@@ -122,6 +122,8 @@ college_recent_grads %>%
   mutate(unemployment_rate = percent(unemployment_rate))
 ```
 
+***Mathmatics and Computer Science, Military Technologies, Botany, Soil Science, and Educational Administration and Supervision all have the lowest unemployment rates of 0.00%.***
+
 ## Which major has the highest percentage of women?
 
 To answer such a question we need to arrange the data in descending order.
@@ -139,6 +141,16 @@ college_recent_grads %>%
 
 1.  Using what you've learned so far, arrange the data in descending order with respect to proportion of women in a major, and display only the major, the total number of people with major, and proportion of women. Show only the top 3 majors by adding `top_n(3)` at the end of the pipeline.
 
+```{r majors_most_women}
+college_recent_grads %>%
+  arrange(desc(sharewomen)) %>%         # arrange from most to least for proportion of women (sharewomen)
+  select(major, total, sharewomen) %>%
+  mutate(sharewomen = percent(sharewomen)) %>%
+  top_n(3)
+```
+
+***Early Childhood Education has the greatest proportion of women (96.90%), followed closely by Communication Disorders Sciences and Services (96.80%) and Medical Assisting Services (92.78%).***
+
 ## How do the distributions of median income compare across major categories?
 
 ```{marginfigure}
@@ -149,6 +161,8 @@ There are three types of incomes reported in this data frame: `p25th`, `median`,
 These correspond to the 25th, 50th, and 75th percentiles of the income distribution of sampled individuals for a given major.
 
 2.  Why do we often choose the median, rather than the mean, to describe the typical income of a group of people?
+
+***The median is often used to describe the typical income of a group of people because it is not heavily affected by outliers (extreme scores) unlike the mean. If 1 or 2 people made significantly more than the rest of the group, the mean could be much higher than what the majority of the people in the group made. The median, however, would still be representative of the majority.***
 
 The question we want to answer "How do the distributions of median income compare across major categories?".
 We need to do a few things to answer this question: First, we need to group the data by `major_category`.
@@ -176,6 +190,13 @@ You might ask yourself: "What would be a meaningful difference in median incomes
 
 3.  Try binwidths of \$1000 and \$5000 and choose one. Explain your reasoning for your choice. Note that the binwidth is an argument for the `geom_histogram` function. So to specify a binwidth of \$1000, you would use `geom_histogram(binwidth = 1000)`.
 
+```{r fig2,height=2}
+ggplot(data = college_recent_grads, mapping = aes(x = median)) +
+  geom_histogram(binwidth = 5000)
+```
+
+***I chose a binwidth of \$5000 because \$1000 broke up the data too many times. This made it appear to be heavily multimodal, while a binwidth of \$5000 showed the overall trends. Also people tend to like "satisfying" numbers more (i.e. 10s and 5s) so it is likely to have more values on these numbers. Breaking it up by by \$1000 causes these numbers unrepresentatively stand out.***
+
 We can also calculate summary statistics for this distribution using the `summarise` function:
 
 ```{r}
@@ -190,26 +211,40 @@ college_recent_grads %>%
 4.  Based on the shape of the histogram you created in the previous exercise, determine which of these summary statistics is useful for describing the distribution.
     Write up your description (remember shape, center, spread, any unusual observations) and include the summary statistic output as well.
 
+**Based on the shape of the histogram, the median and interquartile range (q1 and q3) are most helpful in describing the distribution. The distribution is skewed to the high end and centered around the median (\$36000). Most of the data is spread from \$33000 to \$45000 (q1 and q3). There is one extreme value at around \$110,000.***
+
 5.  Plot the distribution of `median` income using a histogram, faceted by `major_category`.
     Use the `binwidth` you chose in the earlier exercise.
+
+```{r median_incomes_faceted}
+ggplot(data = college_recent_grads, mapping = aes(x = median)) +
+  geom_histogram(binwidth = 5000) +
+  facet_wrap(~major_category) +
+  labs(title = "Median Income Across Majors", subtitle = "Faceted by Major Category", x = "Median Income", y = "Counts")
+```
 
 Now that we've seen the shapes of the distributions of median incomes for each major category, we should have a better idea for which summary statistic to use to quantify the typical median income.
 
 6.  Which major category has the highest typical (you'll need to decide what this means) median income? Use the partial code below, filling it in with the appropriate statistic and function. Also note that we are looking for the highest statistic, so make sure to arrange in the correct direction.
 
-```{r eval=FALSE}
+```{r eval=TRUE}
 college_recent_grads %>%
   group_by(major_category) %>%
-  summarise(___ = ___(median)) %>%
-  arrange(___)
+  summarise(median_income = median(median)) %>%    #using median to determine highest "typical" income since data is skewed by extreme scores
+  arrange(desc(median_income))     #shows results from greatest to least
 ```
+
+***By median (to account for the skewed distributions), Engineering has the highest typical income (median income = \$5700).***
 
 7.  Which major category is the least popular in this sample? To answer this question we use a new function called `count`, which first groups the data and then counts the number of observations in each category (see below). Add to the pipeline appropriately to arrange the results so that the major with the lowest observations is on top.
 
 ```{r}
 college_recent_grads %>%
-  count(major_category)
+  count(major_category) %>%
+  arrange(n)                    # shows results from least to greatest
 ```
+
+***The least popular major category in this sample is Interdisciplinary (n = 1).***
 
 🧶 ✅ ⬆️ Knit, *commit, and push your changes to GitHub with an appropriate commit message. Make sure to commit and push all changed files so that your Git pane is cleared up afterwards.*
 
