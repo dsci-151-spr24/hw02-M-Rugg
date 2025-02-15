@@ -2,6 +2,8 @@
 title: "HW 02 - What should I major in?"
 author: "Moriah Ruggerio"
 output: 
+  pdf_document:
+      latex_engine: xelatex
   tufte::tufte_html:
     css: ../hw.css
     tufte_variant: "envisioned"
@@ -211,7 +213,7 @@ college_recent_grads %>%
 4.  Based on the shape of the histogram you created in the previous exercise, determine which of these summary statistics is useful for describing the distribution.
     Write up your description (remember shape, center, spread, any unusual observations) and include the summary statistic output as well.
 
-**Based on the shape of the histogram, the median and interquartile range (q1 and q3) are most helpful in describing the distribution. The distribution is skewed to the high end and centered around the median (\$36000). Most of the data is spread from \$33000 to \$45000 (q1 and q3). There is one extreme value at around \$110,000.***
+***Based on the shape of the histogram, the median and interquartile range (q1 and q3) are most helpful in describing the distribution. The distribution is skewed to the high end and centered around the median (\$36000). Most of the data is spread from \$33000 to \$45000 (q1 and q3). There is one extreme value at around \$110,000.***
 
 5.  Plot the distribution of `median` income using a histogram, faceted by `major_category`.
     Use the `binwidth` you chose in the earlier exercise.
@@ -314,8 +316,47 @@ college_recent_grads %>%
 
 9.  Create a scatterplot of median income vs. proportion of women in that major, coloured by whether the major is in a STEM field or not. Describe the association between these three variables.
 
+```{r medianincome_women_STEM_plot}
+college_recent_grads %>%
+  ggplot(mapping = aes(x = median, y = sharewomen, color = major_type)) +        #creates scatterplot with median income on x, proportion of women in the field on y, and color by whether or not it is a stem field
+  geom_point(alpha = 0.5) +
+  labs(title = "Median Income vs Proportion of Women", subtitle = "Divided by STEM or not", x = "Median Income", y = "Proportion of Women", color = "STEM or Not") +
+  theme_minimal()
+```
+
+***Non-STEM majors typically have more women than men involved. These fields typically make less than STEM majors. While some STEM majors have a proportion of women over 0.50, most STEM fields have more men. STEM majors also appear to have a higher median income than non-STEM. The highest median income STEM majors also primarily male dominated. Except for 2 points, all majors with median incomes over \$50,000 have a higher proportion of men than women in them.***
+
 ## Further exploration
 
 10. Ask a question of interest to you, and answer it using summary statistic(s) and/or visualization(s).
+
+## Do primarily women dominated majors (proportion of women >= 0.66)  have a higher or lower unemployment rate than male dominated majors (proportion of women <= 0.33) and those that are split (0.33 < proportion of women > 0.66)?
+
+```{r}
+college_recent_grads <- college_recent_grads %>%
+  mutate(dominated_by = if_else(sharewomen >= 0.66, "women",         # first if then statement for women dominated majors
+                        if_else(sharewomen <= 0.33, "men", "both")))     # second if then statement (located in the "false" section) for male dominated majors, false here is both (in between)
+  #creates a new variable for whether the major is primarily men, women, or both
+
+college_recent_grads %>%
+  filter(dominated_by == "women" | dominated_by == "men" | dominated_by == "both") %>%
+  group_by(dominated_by) %>%
+  summarise(med = median(unemployment_rate),, 
+            q1 = quantile(unemployment_rate, probs = 0.25),
+            q3 = quantile(unemployment_rate, probs = 0.75)) %>%
+  arrange(med)
+
+```
+
+``` {r}
+college_recent_grads %>%
+  filter(dominated_by == "women" | dominated_by == "men" | dominated_by == "both") %>%
+  ggplot(mapping = aes(x = unemployment_rate, color = dominated_by, fill = dominated_by)) +        #creates density plot with unemployment rate on  and colored/filled by whether the major is primariyl men, women or both
+  geom_density(alpha = 0.25) +
+  labs(title = "Unemployment Rates", subtitle = "in men or women dominated majors", x = "Unemployment Rate", y = "Counts", color = "Major is Primarily...", fill = "Major is Primarily...") +
+  theme_minimal()
+```
+
+***The median unemployment rate is lowest in majors that are dominated by men (0.058), followed by women (0.069), and highest when it is split (0.072). Looking at the chart, majors that are dominated by women and both are are fairly uniformly distributed with a couple of extremely high values. However, while the centers of the distribution are fairly close together, there are substantially more low values in the men dominated majors. This shows up in the IQRs (Men: q1 = 0.29, q2 = 0.75; Women: q1 = 0.051, q2 = 0.085; Both: q1 = 0.055, q2 = 0.092).***
 
 🧶 ✅ ⬆️ Knit, *commit, and push your changes to GitHub with an appropriate commit message. Make sure to commit and push all changed files so that your Git pane is cleared up afterwards and review the md document on GitHub to make sure you're happy with the final state of your work.*
